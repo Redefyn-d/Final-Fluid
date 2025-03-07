@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,181 +13,180 @@ import { Pencil, Plus } from "lucide-react"
 import Layout from "../components/layout"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
-interface Industry {
+// Export the Industry interface with all required fields
+export interface Industry {
   id: number
   name: string
-  type: string
+  industry_code: string
+  industry_type: string
+  owner_id: string
+  created_at: string
+  location: string
+  phone_number: string
   description?: string
-  ownerName?: string
-  ownerEmail?: string
-  ownerPhone?: string
-  registrationNumber?: string
+  registration_number: string
+  water_source: string
+  daily_water_consumption: string
+  wastewater_generation: string
+  wastewater_treatment_methods: string
+  treated_water_reuse: boolean
+  discharge_points: string
+  environmental_clearance_certificate: boolean
+  pcb_approval_status: "approved" | "not approved"
+  last_environmental_audit_date: string
+  violations_reported: string
+  fine_or_legal_actions_taken: string
 }
 
-const industries: Industry[] = [
-  {
-    id: 1,
-    name: "KSR Textiles",
-    type: "Textile",
-    description: "Leading textile manufacturer",
-    ownerName: "John Doe",
-    ownerEmail: "john@ksrtextiles.com",
-    ownerPhone: "555-0123",
-    registrationNumber: "TX001",
-  },
-  {
-    id: 2,
-    name: "EcoFiber",
-    type: "Textile",
-    description: "Eco-friendly fiber processing",
-    ownerName: "Jane Smith",
-    ownerEmail: "jane@ecofiber.com",
-    ownerPhone: "555-0124",
-    registrationNumber: "TX002",
-  },
-  {
-    id: 3,
-    name: "GreenWeave",
-    type: "Textile",
-    description: "Sustainable textile solutions",
-    ownerName: "Peter Jones",
-    ownerEmail: "peter@greenweave.com",
-    ownerPhone: "555-0125",
-    registrationNumber: "TX003",
-  },
-  {
-    id: 4,
-    name: "PharmaCare",
-    type: "Pharmaceutical",
-    description: "Pharmaceutical manufacturing",
-    ownerName: "Mary Brown",
-    ownerEmail: "mary@pharmacare.com",
-    ownerPhone: "555-0126",
-    registrationNumber: "PH001",
-  },
-  {
-    id: 5,
-    name: "MediCorp",
-    type: "Pharmaceutical",
-    description: "Medical device manufacturer",
-    ownerName: "David Lee",
-    ownerEmail: "david@medicorp.com",
-    ownerPhone: "555-0127",
-    registrationNumber: "PH002",
-  },
-  {
-    id: 6,
-    name: "FoodTech",
-    type: "Food Processing",
-    description: "Food processing and packaging",
-    ownerName: "Sarah Williams",
-    ownerEmail: "sarah@foodtech.com",
-    ownerPhone: "555-0128",
-    registrationNumber: "FP001",
-  },
-  {
-    id: 7,
-    name: "NutriBlend",
-    type: "Food Processing",
-    description: "Nutritional supplement producer",
-    ownerName: "Michael Davis",
-    ownerEmail: "michael@nutriblend.com",
-    ownerPhone: "555-0129",
-    registrationNumber: "FP002",
-  },
-]
+interface ManageIndustriesProps {
+  industries: Industry[]; // Accept industries as a prop
+}
 
 const industryTypes = ["Textile", "Paper and pulp", "Chemical", "Domestic", "Pharmaceutical", "Food processing"]
 const industrySizes = ["Small", "Medium", "Large"]
 const waterSources = ["River", "Groundwater", "Municipality", "Others"]
 const wastewaterTreatmentMethods = ["None", "Primary", "Secondary", "Tertiary"]
 
-export default function ManageIndustries() {
+export default function ManageIndustries({ industries = [] }: ManageIndustriesProps) {
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newIndustry, setNewIndustry] = useState({
+  const [newIndustry, setNewIndustry] = useState<Industry>({
+    id: 0,
     name: "",
-    type: [],
-    size: [],
-    ownerName: "",
-    ownerEmail: "",
-    ownerPhone: "",
-    latitude: "",
-    longitude: "",
-    registrationNumber: "",
-    waterSource: [],
-    waterConsumption: "",
-    wastewaterGeneration: "",
-    wastewaterTreatment: [],
-    waterReuse: "",
-    dischargePoints: "",
-    environmentalClearance: "",
-    pcbStatus: "",
-    lastAuditDate: "",
-    violations: "",
-    legalActions: "",
-    reportFrequency: "",
+    industry_code: "",
+    industry_type: "",
+    owner_id: "",
+    created_at: new Date().toISOString(), // Set current date as default
+    location: "",
+    phone_number: "",
+    description: "",
+    registration_number: "",
+    water_source: "",
+    daily_water_consumption: "",
+    wastewater_generation: "",
+    wastewater_treatment_methods: "",
+    treated_water_reuse: false,
+    discharge_points: "",
+    environmental_clearance_certificate: false,
+    pcb_approval_status: "not approved",
+    last_environmental_audit_date: "",
+    violations_reported: "",
+    fine_or_legal_actions_taken: "",
   })
+  const [industriesList, setIndustriesList] = useState<Industry[]>(industries)
   const [editingIndustry, setEditingIndustry] = useState<Industry | null>(null)
+  const [sectorCounts, setSectorCounts] = useState<Record<string, number>>({})
 
-  const handleAddIndustry = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Add new industry logic here
-    console.log("New industry:", newIndustry)
-    setNewIndustry({
-      name: "",
-      type: [],
-      size: [],
-      ownerName: "",
-      ownerEmail: "",
-      ownerPhone: "",
-      latitude: "",
-      longitude: "",
-      registrationNumber: "",
-      waterSource: [],
-      waterConsumption: "",
-      wastewaterGeneration: "",
-      wastewaterTreatment: [],
-      waterReuse: "",
-      dischargePoints: "",
-      environmentalClearance: "",
-      pcbStatus: "",
-      lastAuditDate: "",
-      violations: "",
-      legalActions: "",
-      reportFrequency: "",
-    })
-    setShowAddForm(false)
+  // Fetch sector counts when the component mounts
+  useEffect(() => {
+    const fetchSectorCounts = async () => {
+      const response = await fetch('/api/getSectorCounts'); // Create an API route to get counts
+      const data = await response.json();
+      if (data.success) {
+        setSectorCounts(data.counts); // Assuming the API returns counts in the format { "industry_type": count }
+      }
+    };
+    fetchSectorCounts();
+  }, []);
+
+  // Function to fetch industries
+  const fetchIndustries = async () => {
+    const response = await fetch('/api/getIndustries'); // Create an API route to get industries
+    const data = await response.json();
+    if (data.success) {
+      setIndustriesList(data.industries); // Assuming the API returns industries in the format { success: true, industries: [...] }
+    } else {
+      console.error("Failed to fetch industries:", data.error);
+    }
+  }
+
+  // Call fetchIndustries when the component mounts
+  useEffect(() => {
+    fetchIndustries();
+  }, []);
+
+  const handleAddIndustry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Attempting to add industry:", newIndustry);
+
+    try {
+        const response = await fetch('/api/addIndustry', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newIndustry),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json(); // Get the error response as JSON
+            console.error("Failed to add industry:", errorData.error);
+            return; // Exit the function if there's an error
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            await fetchIndustries(); // Fetch industries again to show the updated list
+            setShowAddForm(false); // Optionally close the form after submission
+        } else {
+            console.error("Failed to add industry:", result.error);
+        }
+    } catch (error) {
+        console.error("An error occurred while adding the industry:", error);
+    }
   }
 
   const handleEdit = (industry: Industry) => {
     setEditingIndustry(industry)
   }
 
-  const handleUpdateIndustry = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle update logic here
-    console.log("Updated industry:", editingIndustry)
-    setEditingIndustry(null)
+  const handleUpdateIndustry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingIndustry) return;
+
+    try {
+        const response = await fetch(`/api/updateIndustry/${editingIndustry.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(editingIndustry),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Failed to update industry:", errorData.error);
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            await fetchIndustries(); // Fetch industries again to show the updated list
+            setEditingIndustry(null); // Close the edit form
+        } else {
+            console.error("Failed to update industry:", result.error);
+        }
+    } catch (error) {
+        console.error("An error occurred while updating the industry:", error);
+    }
   }
 
-  const groupedIndustries = industries.reduce(
-    (acc, industry) => {
-      if (!acc[industry.type]) {
-        acc[industry.type] = []
-      }
-      acc[industry.type].push(industry)
-      return acc
-    },
-    {} as Record<string, typeof industries>,
-  )
+  const groupedIndustries = industriesList.reduce((acc, industry) => {
+    if (!acc[industry.industry_type]) {
+      acc[industry.industry_type] = [];
+    }
+    acc[industry.industry_type].push(industry);
+    return acc;
+  }, {} as Record<string, Industry[]>);
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto pl-10 py-8">
         <h1 className="text-3xl font-bold mb-8">Manage Industries</h1>
 
-        <Button onClick={() => setShowAddForm(true)} className="mb-8">
-          <Plus className="mr-2 h-4 w-4" /> Add Industry
+        <Button onClick={() => setShowAddForm(!showAddForm)} className="mb-8">
+          <Plus className="mr-2 h-4 w-4" /> {showAddForm ? "Close Form" : "Add Industry"}
         </Button>
 
         {showAddForm && (
@@ -207,266 +206,199 @@ export default function ManageIndustries() {
                   />
                 </div>
                 <div>
-                  <Label>Industry Type</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {industryTypes.map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`type-${type}`}
-                          checked={newIndustry.type.includes(type)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setNewIndustry({ ...newIndustry, type: [...newIndustry.type, type] })
-                            } else {
-                              setNewIndustry({ ...newIndustry, type: newIndustry.type.filter((t) => t !== type) })
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`type-${type}`}>{type}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label>Industry Size</Label>
-                  <div className="flex space-x-4">
-                    {industrySizes.map((size) => (
-                      <div key={size} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`size-${size}`}
-                          checked={newIndustry.size.includes(size)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setNewIndustry({ ...newIndustry, size: [...newIndustry.size, size] })
-                            } else {
-                              setNewIndustry({ ...newIndustry, size: newIndustry.size.filter((s) => s !== size) })
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`size-${size}`}>{size}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="ownerName">Owner/Manager Name</Label>
+                  <Label htmlFor="industryCode">Industry Code</Label>
                   <Input
-                    id="ownerName"
-                    value={newIndustry.ownerName}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, ownerName: e.target.value })}
+                    id="industryCode"
+                    value={newIndustry.industry_code}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, industry_code: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ownerEmail">Owner Email</Label>
+                  <Label htmlFor="industryType">Industry Type</Label>
+                  <Select
+                    value={newIndustry.industry_type}
+                    onValueChange={(value: string) => setNewIndustry({ ...newIndustry, industry_type: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Industry Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {industryTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="ownerId">Owner ID</Label>
                   <Input
-                    id="ownerEmail"
-                    type="email"
-                    value={newIndustry.ownerEmail}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, ownerEmail: e.target.value })}
+                    id="ownerId"
+                    value={newIndustry.owner_id}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, owner_id: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="ownerPhone">Owner Phone Number</Label>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
                   <Input
-                    id="ownerPhone"
+                    id="phoneNumber"
                     type="tel"
-                    value={newIndustry.ownerPhone}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, ownerPhone: e.target.value })}
+                    value={newIndustry.phone_number}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, phone_number: e.target.value })}
+                    required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      value={newIndustry.latitude}
-                      onChange={(e) => setNewIndustry({ ...newIndustry, latitude: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      value={newIndustry.longitude}
-                      onChange={(e) => setNewIndustry({ ...newIndustry, longitude: e.target.value })}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newIndustry.description}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, description: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="registrationNumber">Industry Registration Number</Label>
+                  <Label htmlFor="registrationNumber">Registration Number</Label>
                   <Input
                     id="registrationNumber"
-                    value={newIndustry.registrationNumber}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, registrationNumber: e.target.value })}
+                    value={newIndustry.registration_number}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, registration_number: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Water Source</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {waterSources.map((source) => (
-                      <div key={source} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`source-${source}`}
-                          checked={newIndustry.waterSource.includes(source)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setNewIndustry({ ...newIndustry, waterSource: [...newIndustry.waterSource, source] })
-                            } else {
-                              setNewIndustry({
-                                ...newIndustry,
-                                waterSource: newIndustry.waterSource.filter((s) => s !== source),
-                              })
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`source-${source}`}>{source}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="waterConsumption">Daily Water Consumption (Liters/Day)</Label>
+                  <Label htmlFor="waterSource">Water Source</Label>
                   <Input
-                    id="waterConsumption"
-                    type="number"
-                    value={newIndustry.waterConsumption}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, waterConsumption: e.target.value })}
+                    id="waterSource"
+                    value={newIndustry.water_source}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, water_source: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="wastewaterGeneration">Wastewater Generation (Liters/Day)</Label>
+                  <Label htmlFor="dailyWaterConsumption">Daily Water Consumption</Label>
+                  <Input
+                    id="dailyWaterConsumption"
+                    value={newIndustry.daily_water_consumption}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, daily_water_consumption: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="wastewaterGeneration">Wastewater Generation</Label>
                   <Input
                     id="wastewaterGeneration"
-                    type="number"
-                    value={newIndustry.wastewaterGeneration}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, wastewaterGeneration: e.target.value })}
+                    value={newIndustry.wastewater_generation}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, wastewater_generation: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Wastewater Treatment Methods Used</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {wastewaterTreatmentMethods.map((method) => (
-                      <div key={method} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`treatment-${method}`}
-                          checked={newIndustry.wastewaterTreatment.includes(method)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setNewIndustry({
-                                ...newIndustry,
-                                wastewaterTreatment: [...newIndustry.wastewaterTreatment, method],
-                              })
-                            } else {
-                              setNewIndustry({
-                                ...newIndustry,
-                                wastewaterTreatment: newIndustry.wastewaterTreatment.filter((m) => m !== method),
-                              })
-                            }
-                          }}
-                        />
-                        <Label htmlFor={`treatment-${method}`}>{method}</Label>
-                      </div>
-                    ))}
-                  </div>
+                  <Label htmlFor="wastewaterTreatmentMethods">Wastewater Treatment Methods</Label>
+                  <Input
+                    id="wastewaterTreatmentMethods"
+                    value={newIndustry.wastewater_treatment_methods}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, wastewater_treatment_methods: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
-                  <Label>Treated Water Reuse?</Label>
-                  <RadioGroup
-                    value={newIndustry.waterReuse}
-                    onValueChange={(value) => setNewIndustry({ ...newIndustry, waterReuse: value })}
+                  <Label htmlFor="treatedWaterReuse">Treated Water Reuse</Label>
+                  <Select
+                    value={newIndustry.treated_water_reuse ? "yes" : "no"}
+                    onValueChange={(value: string) => setNewIndustry({ ...newIndustry, treated_water_reuse: value === "yes" })}
+                    required
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Yes" id="waterReuseYes" />
-                      <Label htmlFor="waterReuseYes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="No" id="waterReuseNo" />
-                      <Label htmlFor="waterReuseNo">No</Label>
-                    </div>
-                  </RadioGroup>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label htmlFor="dischargePoints">Discharge Points & GPS Location</Label>
+                  <Label htmlFor="dischargePoints">Discharge Points</Label>
                   <Input
                     id="dischargePoints"
-                    value={newIndustry.dischargePoints}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, dischargePoints: e.target.value })}
+                    value={newIndustry.discharge_points}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, discharge_points: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label>Environmental Clearance Certificate</Label>
-                  <RadioGroup
-                    value={newIndustry.environmentalClearance}
-                    onValueChange={(value) => setNewIndustry({ ...newIndustry, environmentalClearance: value })}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Yes" id="clearanceYes" />
-                      <Label htmlFor="clearanceYes">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="No" id="clearanceNo" />
-                      <Label htmlFor="clearanceNo">No</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div>
-                  <Label htmlFor="pcbStatus">PCB Approval Status</Label>
+                  <Label htmlFor="environmentalClearanceCertificate">Environmental Clearance Certificate</Label>
                   <Select
-                    value={newIndustry.pcbStatus}
-                    onValueChange={(value) => setNewIndustry({ ...newIndustry, pcbStatus: value })}
+                    value={newIndustry.environmental_clearance_certificate ? "yes" : "no"}
+                    onValueChange={(value: string) => setNewIndustry({ ...newIndustry, environmental_clearance_certificate: value === "yes" })}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="Select Option" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="lastAuditDate">Last Environmental Audit Date</Label>
+                  <Label htmlFor="pcbApprovalStatus">PCB Approval Status</Label>
+                  <Select
+                    value={newIndustry.pcb_approval_status}
+                    onValueChange={(value: "approved" | "not approved") => setNewIndustry({ ...newIndustry, pcb_approval_status: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="not approved">Not Approved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="lastEnvironmentAuditDate">Last Environmental Audit Date</Label>
                   <Input
-                    id="lastAuditDate"
+                    id="lastEnvironmentAuditDate"
                     type="date"
-                    value={newIndustry.lastAuditDate}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, lastAuditDate: e.target.value })}
+                    value={newIndustry.last_environmental_audit_date}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, last_environmental_audit_date: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="violations">Violations Reported</Label>
-                  <Textarea
-                    id="violations"
-                    value={newIndustry.violations}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, violations: e.target.value })}
+                  <Label htmlFor="violationsReported">Violations Reported</Label>
+                  <Input
+                    id="violationsReported"
+                    value={newIndustry.violations_reported}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, violations_reported: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="legalActions">Fine or Legal Actions Taken</Label>
-                  <Textarea
-                    id="legalActions"
-                    value={newIndustry.legalActions}
-                    onChange={(e) => setNewIndustry({ ...newIndustry, legalActions: e.target.value })}
+                  <Label htmlFor="fineOrLegalActionsTaken">Fine or Legal Actions Taken</Label>
+                  <Input
+                    id="fineOrLegalActionsTaken"
+                    value={newIndustry.fine_or_legal_actions_taken}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, fine_or_legal_actions_taken: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="reportFrequency">Frequency of Pollution Reports Submitted</Label>
-                  <Select
-                    value={newIndustry.reportFrequency}
-                    onValueChange={(value) => setNewIndustry({ ...newIndustry, reportFrequency: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select frequency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Monthly">Monthly</SelectItem>
-                      <SelectItem value="Quarterly">Quarterly</SelectItem>
-                      <SelectItem value="Annually">Annually</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={newIndustry.location}
+                    onChange={(e) => setNewIndustry({ ...newIndustry, location: e.target.value })}
+                    required
+                  />
                 </div>
                 <Button type="submit">Add Industry</Button>
               </form>
@@ -482,7 +414,7 @@ export default function ManageIndustries() {
               <DialogDescription>Update the industry details below.</DialogDescription>
             </DialogHeader>
             {editingIndustry && (
-              <form onSubmit={handleUpdateIndustry} className="space-y-4">
+              <form onSubmit={handleUpdateIndustry} className="space-y-4 max-h-[500px] overflow-y-auto">
                 <div>
                   <Label htmlFor="editName">Industry Name</Label>
                   <Input
@@ -493,13 +425,23 @@ export default function ManageIndustries() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="editType">Industry Type</Label>
+                  <Label htmlFor="editIndustryCode">Industry Code</Label>
+                  <Input
+                    id="editIndustryCode"
+                    value={editingIndustry.industry_code}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, industry_code: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editIndustryType">Industry Type</Label>
                   <Select
-                    value={editingIndustry.type}
-                    onValueChange={(value) => setEditingIndustry({ ...editingIndustry, type: value })}
+                    value={editingIndustry.industry_type}
+                    onValueChange={(value: string) => setEditingIndustry({ ...editingIndustry, industry_type: value })}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Select Industry Type" />
                     </SelectTrigger>
                     <SelectContent>
                       {industryTypes.map((type) => (
@@ -511,61 +453,188 @@ export default function ManageIndustries() {
                   </Select>
                 </div>
                 <div>
+                  <Label htmlFor="editOwnerId">Owner ID</Label>
+                  <Input
+                    id="editOwnerId"
+                    value={editingIndustry.owner_id}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, owner_id: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLocation">Location</Label>
+                  <Input
+                    id="editLocation"
+                    value={editingIndustry.location}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, location: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editPhoneNumber">Phone Number</Label>
+                  <Input
+                    id="editPhoneNumber"
+                    type="tel"
+                    value={editingIndustry.phone_number}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, phone_number: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
                   <Label htmlFor="editDescription">Description</Label>
                   <Textarea
                     id="editDescription"
-                    value={editingIndustry.description || ""}
+                    value={editingIndustry.description}
                     onChange={(e) => setEditingIndustry({ ...editingIndustry, description: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="editOwnerName">Owner Name</Label>
-                  <Input
-                    id="editOwnerName"
-                    value={editingIndustry.ownerName || ""}
-                    onChange={(e) => setEditingIndustry({ ...editingIndustry, ownerName: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="editOwnerEmail">Owner Email</Label>
-                  <Input
-                    id="editOwnerEmail"
-                    type="email"
-                    value={editingIndustry.ownerEmail || ""}
-                    onChange={(e) => setEditingIndustry({ ...editingIndustry, ownerEmail: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="editOwnerPhone">Owner Phone</Label>
-                  <Input
-                    id="editOwnerPhone"
-                    value={editingIndustry.ownerPhone || ""}
-                    onChange={(e) => setEditingIndustry({ ...editingIndustry, ownerPhone: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
                   <Label htmlFor="editRegistrationNumber">Registration Number</Label>
                   <Input
                     id="editRegistrationNumber"
-                    value={editingIndustry.registrationNumber || ""}
-                    onChange={(e) => setEditingIndustry({ ...editingIndustry, registrationNumber: e.target.value })}
+                    value={editingIndustry.registration_number}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, registration_number: e.target.value })}
+                    required
                   />
                 </div>
-                <Button type="submit">Update Industry</Button>
+                <div>
+                  <Label htmlFor="editWaterSource">Water Source</Label>
+                  <Input
+                    id="editWaterSource"
+                    value={editingIndustry.water_source}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, water_source: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editDailyWaterConsumption">Daily Water Consumption</Label>
+                  <Input
+                    id="editDailyWaterConsumption"
+                    value={editingIndustry.daily_water_consumption}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, daily_water_consumption: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editWastewaterGeneration">Wastewater Generation</Label>
+                  <Input
+                    id="editWastewaterGeneration"
+                    value={editingIndustry.wastewater_generation}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, wastewater_generation: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editWastewaterTreatmentMethods">Wastewater Treatment Methods</Label>
+                  <Input
+                    id="editWastewaterTreatmentMethods"
+                    value={editingIndustry.wastewater_treatment_methods}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, wastewater_treatment_methods: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editTreatedWaterReuse">Treated Water Reuse</Label>
+                  <Select
+                    value={editingIndustry.treated_water_reuse ? "yes" : "no"}
+                    onValueChange={(value: string) => setEditingIndustry({ ...editingIndustry, treated_water_reuse: value === "yes" })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="editDischargePoints">Discharge Points</Label>
+                  <Input
+                    id="editDischargePoints"
+                    value={editingIndustry.discharge_points}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, discharge_points: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editEnvironmentalClearanceCertificate">Environmental Clearance Certificate</Label>
+                  <Select
+                    value={editingIndustry.environmental_clearance_certificate ? "yes" : "no"}
+                    onValueChange={(value: string) => setEditingIndustry({ ...editingIndustry, environmental_clearance_certificate: value === "yes" })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="editPcbApprovalStatus">PCB Approval Status</Label>
+                  <Select
+                    value={editingIndustry.pcb_approval_status}
+                    onValueChange={(value: "approved" | "not approved") => setEditingIndustry({ ...editingIndustry, pcb_approval_status: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="not approved">Not Approved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="editLastEnvironmentAuditDate">Last Environmental Audit Date</Label>
+                  <Input
+                    id="editLastEnvironmentAuditDate"
+                    type="date"
+                    value={editingIndustry.last_environmental_audit_date}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, last_environmental_audit_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editViolationsReported">Violations Reported</Label>
+                  <Input
+                    id="editViolationsReported"
+                    value={editingIndustry.violations_reported}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, violations_reported: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editFineOrLegalActionsTaken">Fine or Legal Actions Taken</Label>
+                  <Input
+                    id="editFineOrLegalActionsTaken"
+                    value={editingIndustry.fine_or_legal_actions_taken}
+                    onChange={(e) => setEditingIndustry({ ...editingIndustry, fine_or_legal_actions_taken: e.target.value })}
+                    required
+                  />
+                </div>
+                <Button type="submit">Save Changes</Button>
               </form>
             )}
           </DialogContent>
         </Dialog>
 
+        {/* Display existing industries */}
         {Object.entries(groupedIndustries).map(([type, industries]) => (
-          <Card key={type} className="mb-8">
+          <Card key={type} className="mb-8 w-[calc(100%-16px)]">
             <CardHeader>
               <CardTitle>{type}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {industries.map((industry) => (
-                  <Card key={industry.id}>
+                  <Card key={industry.id} className="w-[calc(100%-16px)]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">{industry.name}</CardTitle>
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(industry)}>
@@ -574,7 +643,7 @@ export default function ManageIndustries() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-gray-600">{industry.description}</p>
-                      <p className="text-sm text-gray-600 mt-1">Reg. No: {industry.registrationNumber}</p>
+                      <p className="text-sm text-gray-600 mt-1">Reg. No: {industry.registration_number}</p>
                     </CardContent>
                   </Card>
                 ))}
