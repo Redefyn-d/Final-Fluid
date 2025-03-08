@@ -433,33 +433,14 @@ export default function ManageIndustries({ industries = [] }: ManageIndustriesPr
                     required
                   />
                 </div>
+                {/* Display industry type and owner ID as read-only text */}
                 <div>
-                  <Label htmlFor="editIndustryType">Industry Type</Label>
-                  <Select
-                    value={editingIndustry.industry_type}
-                    onValueChange={(value: string) => setEditingIndustry({ ...editingIndustry, industry_type: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Industry Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {industryTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Industry Type</Label>
+                  <p className="text-sm text-gray-500 mt-1">{editingIndustry.industry_type}</p>
                 </div>
                 <div>
-                  <Label htmlFor="editOwnerId">Owner ID</Label>
-                  <Input
-                    id="editOwnerId"
-                    value={editingIndustry.owner_id}
-                    onChange={(e) => setEditingIndustry({ ...editingIndustry, owner_id: e.target.value })}
-                    required
-                  />
+                  <Label>Owner ID</Label>
+                  <p className="text-sm text-gray-500 mt-1">{editingIndustry.owner_id}</p>
                 </div>
                 <div>
                   <Label htmlFor="editLocation">Location</Label>

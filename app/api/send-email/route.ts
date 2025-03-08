@@ -1,59 +1,94 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
+import { google } from 'googleapis';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
-  try {
-    // Parse the JSON body to get email parameters.
+    const supabase = createServerComponentClient({ cookies });
     const { to, subject, body } = await request.json();
 
-    // Verify that all required SMTP environment variables are set.
-    if (
-      !process.env.SMTP_HOST ||
-      !process.env.SMTP_PORT ||
-      !process.env.SMTP_USER ||
-      !process.env.SMTP_PASS ||
-      !process.env.SMTP_FROM
-    ) {
-      console.error("Missing one or more SMTP environment variables.");
-      return NextResponse.json(
-        { error: "Missing SMTP configuration." },
-        { status: 500 }
-      );
+    // Input validation
+    if (!to || !subject || !body) {
+        return NextResponse.json({ 
+            success: false, 
+            error: "Missing required fields" 
+        }, { status: 400 });
     }
 
-    // Create the Nodemailer transporter.
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST, // e.g., smtp.gmail.com
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465, // true for port 465, false for 587
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+        return NextResponse.json({ 
+            success: false, 
+            error: "Invalid email format" 
+        }, { status: 400 });
+    }
 
-    const mailOptions = {
-      from: process.env.SMTP_FROM,
-      to,
-      subject,
-      text: body,
-    };
+    // Validate OAuth2 credentials
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.REFRESH_TOKEN) {
+        console.error('Missing OAuth2 credentials');
+        return NextResponse.json({ 
+            success: false, 
+            error: "Email service configuration error" 
+        }, { status: 500 });
+    }
 
-    // Attempt to send the email.
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
+    try {
+        // Create OAuth2 client
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.CLIENT_ID,
+            process.env.CLIENT_SECRET,
+            process.env.REDIRECT_URI
+        );
 
-    // Return success response.
-    return NextResponse.json(
-      { message: "Email sent successfully." },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error sending email:", error);
-    // Ensure that no matter what, we always return a response.
-    return NextResponse.json(
-      { error: "Error sending email." },
-      { status: 500 }
-    );
-  }
-} 
+        oauth2Client.setCredentials({
+            refresh_token: process.env.REFRESH_TOKEN,
+        });
+
+        // Get access token
+        const accessToken = await oauth2Client.getAccessToken();
+        if (!accessToken.token) {
+            throw new Error('Failed to obtain access token');
+        }
+
+        // Create transporter
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: "OAuth2",
+                user: process.env.SMTP_USER,
+                clientId: process.env.CLIENT_ID,
+                clientSecret: process.env.CLIENT_SECRET,
+                refreshToken: process.env.REFRESH_TOKEN,
+                accessToken: accessToken.token,
+            },
+        } as nodemailer.TransportOptions);
+
+        // Verify transporter configuration
+        await transporter.verify();
+
+        // Send email
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: to,
+            subject: subject,
+            text: body,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        // Return success response
+        return NextResponse.json({ 
+            success: true,
+            message: "Email sent successfully" 
+        });
+    } catch (error: any) {
+        console.error('Error sending email:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return NextResponse.json({ 
+            success: false, 
+            error: errorMessage 
+        }, { status: 500 });
+    }
+}

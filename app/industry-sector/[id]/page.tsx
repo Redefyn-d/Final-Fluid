@@ -58,6 +58,37 @@ export default async function IndustrySectorPage({ params }: Params) {
   // Fallback to an empty array in case no industries are found.
   const industries = fetchedIndustries ?? []
 
+  const handleSendWarning = async () => {
+    // Construct the email subject and body.
+    const subject = `Urgent: Water Quality Alert for ${industryDetails.name}`;
+    let emailBody = `Dear ${industryDetails.name} Team,\n\n`;
+    emailBody += "Our monitoring system has detected the following water quality parameter(s) exceeding safe thresholds:\n\n";
+    // Add exceeded parameters to emailBody...
+
+    // Send the email by calling the backend API endpoint.
+    try {
+        const response = await fetch("/api/send-email", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                to: ownerDetails.email,
+                subject,
+                body: emailBody,
+            }),
+        });
+        if (response.ok) {
+            console.log("Warning email sent successfully.");
+        } else {
+            const errorText = await response.text();
+            console.error("Failed to send email. Response:", errorText);
+        }
+    } catch (error) {
+        console.error("Error sending warning email:", error);
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">

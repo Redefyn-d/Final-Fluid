@@ -22,6 +22,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { createClient } from "@supabase/supabase-js"
 import { jsPDF } from "jspdf"
+import { Email } from "app/types/email"
+import { google } from "googleapis"
+import nodemailer from "nodemailer"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 
 // Mapping parameter labels to table column names.
 const parameterMapping: { [key: string]: string } = {
@@ -51,6 +57,18 @@ export default function IndustryPage() {
   const [activeTab, setActiveTab] = useState("incoming") // "incoming", "outgoing", "combined"
   const [reportType, setReportType] = useState("")
   const [date, setDate] = useState<Date>()
+  // Replace the existing email states
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [newEmail, setNewEmail] = useState<{
+    subject: string;
+    to: string;
+    content: string;
+  }>({
+    subject: "",
+    to: "",
+    content: "",
+  });
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch industry details from the "industries" table.
   useEffect(() => {
@@ -265,7 +283,22 @@ export default function IndustryPage() {
         }),
       });
       if (response.ok) {
-        console.log("Warning email sent successfully.");
+        // Store warning email in Supabase with correct table name
+        const { error: supabaseError } = await supabase
+          .from('email_sent')  // Changed from 'emails' to 'email_sent'
+          .insert({
+            recipient: ownerDetails.email,
+            subject: subject,
+            content: emailBody,
+            sent_at: new Date().toISOString()
+          })
+
+        if (supabaseError) {
+          console.error('Error storing warning email in database:', supabaseError)
+          throw new Error('Failed to store warning email in database')
+        }
+
+        console.log("Warning email sent and stored successfully.")
       } else {
         const errorText = await response.text();
         console.error("Failed to send email. Response:", errorText);
@@ -337,6 +370,54 @@ export default function IndustryPage() {
     doc.save(`${reportTitle}.pdf`)
   }
 
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const emailData = {
+      subject: newEmail.subject,
+      to: newEmail.to,
+      body: newEmail.content,
+    };
+
+    // Validate the email format before sending
+    if (!isValidEmail(emailData.to)) {
+      console.error("Invalid email format.");
+      alert("Please enter a valid email address.");
+      return; // Exit the function if the email is invalid
+    }
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Email sent successfully:", result);
+        // Reset the email form
+        setNewEmail({ subject: "", to: "", content: "" });
+        setError(null); // Clear error message on success
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to send email:", errorData.error);
+        alert("Failed to send email: " + errorData.error);
+      }
+    } catch (error: unknown) { 
+      console.error("An error occurred while sending the email:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      alert("An error occurred while sending the email: " + errorMessage);
+    }
+  };
+
+  // Email validation function
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -366,6 +447,7 @@ export default function IndustryPage() {
                 </CardDescription>
               </div>
               <div className="flex gap-4">
+                {/* Existing Generate Report Dialog */}
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline">
@@ -421,6 +503,7 @@ export default function IndustryPage() {
                     </div>
                   </DialogContent>
                 </Dialog>
+
                 <Button onClick={handleSendWarning} variant="destructive">
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   Send Manual Warning
