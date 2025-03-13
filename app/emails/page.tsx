@@ -21,9 +21,9 @@ import { createClient } from "@supabase/supabase-js"
 interface Email {
   id: string
   subject: string
-  to: string
+  recipient: string  // Changed from 'to' to match database
   content: string
-  sentAt: Date
+  sent_at: string    // Changed from 'sentAt' to match database
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -95,41 +95,83 @@ export default function EmailsPage() {
   useEffect(() => {
     async function fetchEmails() {
       try {
+        console.log('Attempting to fetch emails...');
+        
+        // First, let's check available tables
+        const { data: tables } = await supabase
+          .from('email_sent')
+          .select('*');
+        
+        console.log('Available data:', tables);
+
+        // Try with explicit schema
         const { data, error } = await supabase
           .from('email_sent')
-          .select('id, recipient, subject, content, sent_at')
-          .order('sent_at', { ascending: false })
+          .select('*')
+          .order('sent_at', { ascending: false });
+
+        console.log('Full response:', { data, error });
 
         if (error) {
-          console.error('Error fetching emails:', error)
-          return
+          console.error('Supabase error:', error);
+          return;
         }
 
-        if (data) {
-          setEmails(data.map(email => ({
-            id: email.id.toString(),
-            subject: email.subject,
-            to: email.recipient,
-            content: email.content,
-            sentAt: new Date(email.sent_at)
-          })))
+        if (data && Array.isArray(data)) {
+          console.log('Data found:', data);
+          setEmails(data);
         }
       } catch (err) {
-        console.error('Failed to fetch emails:', err)
+        console.error('Failed to fetch emails:', err);
       }
     }
 
-    fetchEmails()
-  }, [])
+    fetchEmails();
+  }, []);
+
+  // Add this to check table structure
+  useEffect(() => {
+    async function checkTable() {
+      try {
+        const { data, error } = await supabase
+          .from('email_sent')
+          .select('*')
+          .limit(1);
+        
+        console.log('Table check:', { data, error });
+      } catch (err) {
+        console.error('Table check failed:', err);
+      }
+    }
+    checkTable();
+  }, []);
+
+  // Add debug log for emails state
+  useEffect(() => {
+    console.log('Current emails state:', emails)
+  }, [emails])
+
+  // Add this near the top of your component
+  useEffect(() => {
+    async function testConnection() {
+      try {
+        const { data, error } = await supabase.from('email_sent').select('count');
+        console.log('Connection test:', { data, error });
+      } catch (err) {
+        console.error('Connection test failed:', err);
+      }
+    }
+    testConnection();
+  }, []);
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Email History</h1>
+          <h1 className="text-2xl font-bold">Email History</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-black text-white">
                 <Send className="mr-2 h-4 w-4" />
                 Send Email
               </Button>
@@ -178,24 +220,26 @@ export default function EmailsPage() {
         </div>
 
         <div className="space-y-4">
-          {emails && emails.length > 0 ? (
+          {emails && emails.length > 0 && (
             emails.map((email) => (
-              <Card key={email.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-xl">{email.subject}</CardTitle>
-                  <CardDescription className="text-sm">
-                    Sent to: {email.recipient}
+              <Card key={email.id} className="border rounded-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-bold">{email.subject}</CardTitle>
+                  <CardDescription className="text-sm text-gray-500">
+                    To: {email.recipient}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600 mb-2">{email.content}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-600 break-words">{email.content}</p>
+                  <p className="text-xs text-gray-400 mt-4">
                     Sent on {new Date(email.sent_at).toLocaleString()}
                   </p>
                 </CardContent>
               </Card>
             ))
-          ) : (
+          )}
+
+          {(!emails || emails.length === 0) && (
             <Card className="text-center py-16">
               <CardContent>
                 <img
