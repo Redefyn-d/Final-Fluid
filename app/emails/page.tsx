@@ -94,21 +94,28 @@ export default function EmailsPage() {
   // Update the fetch emails function as well
   useEffect(() => {
     async function fetchEmails() {
-      const { data, error } = await supabase
-        .from('email_sent')  // Changed from 'emails' to 'email_sent'
-        .select('*')
-        .order('sent_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('email_sent')
+          .select('id, recipient, subject, content, sent_at')
+          .order('sent_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching emails:', error)
-      } else {
-        setEmails(data.map(email => ({
-          id: email.id.toString(),
-          subject: email.subject,
-          to: email.recipient,
-          content: email.content,
-          sentAt: new Date(email.sent_at)
-        })))
+        if (error) {
+          console.error('Error fetching emails:', error)
+          return
+        }
+
+        if (data) {
+          setEmails(data.map(email => ({
+            id: email.id.toString(),
+            subject: email.subject,
+            to: email.recipient,
+            content: email.content,
+            sentAt: new Date(email.sent_at)
+          })))
+        }
+      } catch (err) {
+        console.error('Failed to fetch emails:', err)
       }
     }
 
@@ -170,39 +177,82 @@ export default function EmailsPage() {
           </Dialog>
         </div>
 
-        {emails.length === 0 ? (
-          <Card className="text-center py-16">
-            <CardContent>
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/EMAIL-KdA0hcGWOU5VPJ7ZbGOCp86XtjyNbC.png"
-                alt="No emails"
-                className="mx-auto mb-4 w-48"
-              />
-              <h2 className="text-xl font-semibold mb-2">Oh-uh! You haven't sent any email.</h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>Send Emails</Button>
-                </DialogTrigger>
-                <DialogContent>{/* Same form content as above */}</DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {emails.map((email) => (
-              <Card key={email.id}>
+        <div className="space-y-4">
+          {emails && emails.length > 0 ? (
+            emails.map((email) => (
+              <Card key={email.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <CardTitle>{email.subject}</CardTitle>
-                  <CardDescription>To: {email.to}</CardDescription>
+                  <CardTitle className="text-xl">{email.subject}</CardTitle>
+                  <CardDescription className="text-sm">
+                    Sent to: {email.recipient}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-2">{email.content}</p>
-                  <p className="text-xs text-gray-400">Sent on {email.sentAt.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">
+                    Sent on {new Date(email.sent_at).toLocaleString()}
+                  </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            <Card className="text-center py-16">
+              <CardContent>
+                <img
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/EMAIL-KdA0hcGWOU5VPJ7ZbGOCp86XtjyNbC.png"
+                  alt="No emails"
+                  className="mx-auto mb-4 w-48"
+                />
+                <h2 className="text-xl font-semibold mb-2">No emails sent yet</h2>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>Send Emails</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[525px]">
+                    <DialogHeader>
+                      <DialogTitle>Send Email</DialogTitle>
+                      <DialogDescription>Send an email to industry contacts.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSendEmail} className="space-y-4">
+                      <div>
+                        <Label htmlFor="to">To</Label>
+                        <Input
+                          id="to"
+                          value={newEmail.to}
+                          onChange={(e) => setNewEmail({ ...newEmail, to: e.target.value })}
+                          placeholder="recipient@example.com"
+                          type="email"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="subject">Subject</Label>
+                        <Input
+                          id="subject"
+                          value={newEmail.subject}
+                          onChange={(e) => setNewEmail({ ...newEmail, subject: e.target.value })}
+                          placeholder="Email subject"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="content">Content</Label>
+                        <Textarea
+                          id="content"
+                          value={newEmail.content}
+                          onChange={(e) => setNewEmail({ ...newEmail, content: e.target.value })}
+                          placeholder="Type your message here..."
+                          required
+                        />
+                      </div>
+                      <Button type="submit">Send Email</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </Layout>
   )
