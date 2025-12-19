@@ -62,6 +62,4 @@
 
 The goal of **River AI** is to build **smarter environmental intelligence** — giving authorities and researchers the tools to act swiftly against water pollution and preserve ecological balance.  
 
----
 
-Would you like me to add a **“Setup & Installation”** section (with steps to run locally) and a **“Contribution Guidelines”** section next?
